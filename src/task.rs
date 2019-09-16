@@ -59,6 +59,7 @@ pub struct TaskBuilder {
     task_name: String,
     task_stack_size: u16,
     task_priority: TaskPriority,
+    task_core: Option<u32>,
 }
 
 impl TaskBuilder {
@@ -80,6 +81,12 @@ impl TaskBuilder {
         self
     }
 
+    /// Set the task's running core.
+    pub fn core(&mut self, core: u32) -> &mut Self {
+        self.task_core = Some(core);
+        self
+    }
+
     /// Start a new task that can't return a value.
     pub fn start<F>(&self, func: F) -> Result<Task, FreeRtosError>
         where F: FnOnce() -> (),
@@ -89,6 +96,7 @@ impl TaskBuilder {
         Task::spawn(&self.task_name,
                     self.task_stack_size,
                     self.task_priority,
+                    self.task_core,
                     func)
 
     }
@@ -103,13 +111,15 @@ impl Task {
             task_name: "rust_task".into(),
             task_stack_size: 1024,
             task_priority: TaskPriority(1),
+            task_core: None,
         }
     }
 
     unsafe fn spawn_inner<'a>(f: Box<FnBox() + Send + 'a>,
                               name: &str,
                               stack_size: u16,
-                              priority: TaskPriority)
+                              priority: TaskPriority,
+                              core: Option<u32>)
                               -> Result<Task, FreeRtosError> {
         let f = Box::new(f);
         let param_ptr = &*f as *const _ as *mut _;
@@ -118,13 +128,15 @@ impl Task {
             let name = name.as_bytes();
             let name_len = name.len();
             let mut task_handle = mem::zeroed::<CVoid>();
-
+            let core_value = core.unwrap_or(0);
+            let core_ptr = core.map_or(ptr::null(), |c| &core_value);
             let ret = freertos_rs_spawn_task(thread_start,
                                              param_ptr,
                                              name.as_ptr(),
                                              name_len as u8,
                                              stack_size,
                                              priority.to_freertos(),
+                                             core_ptr,
                                              &mut task_handle);
 
             (ret == 0, task_handle)
@@ -156,13 +168,14 @@ impl Task {
     fn spawn<F>(name: &str,
                 stack_size: u16,
                 priority: TaskPriority,
+                core: Option<u32>,
                 f: F)
                 -> Result<Task, FreeRtosError>
         where F: FnOnce() -> (),
               F: Send + 'static
     {
         unsafe {
-            return Task::spawn_inner(Box::new(f), name, stack_size, priority);
+            return Task::spawn_inner(Box::new(f), name, stack_size, priority, core);
         }
     }
 

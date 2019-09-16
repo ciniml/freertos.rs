@@ -47,7 +47,7 @@ extern {
 	pub fn freertos_rs_task_notify(task: FreeRtosTaskHandle, value: u32, action: u8) -> FreeRtosBaseType;
 	pub fn freertos_rs_task_notify_isr(task: FreeRtosTaskHandle, value: u32, action: u8, xHigherPriorityTaskWoken: FreeRtosBaseTypeMutPtr) -> FreeRtosBaseType;
 
-	pub fn freertos_rs_spawn_task(f: extern fn(FreeRtosMutVoidPtr) -> FreeRtosMutVoidPtr, value: FreeRtosMutVoidPtr, name: FreeRtosCharPtr, name_len: u8, stack_size: u16, priority: FreeRtosUBaseType, task_handle: FreeRtosMutTaskHandle) -> FreeRtosUBaseType;
+	pub fn freertos_rs_spawn_task(f: extern fn(FreeRtosMutVoidPtr) -> FreeRtosMutVoidPtr, value: FreeRtosMutVoidPtr, name: FreeRtosCharPtr, name_len: u8, stack_size: u16, priority: FreeRtosUBaseType, core: *const u32, task_handle: FreeRtosMutTaskHandle) -> FreeRtosUBaseType;
 	pub fn freertos_rs_delete_task(task: FreeRtosTaskHandle);
 	pub fn freertos_rs_task_get_name(task: FreeRtosTaskHandle) -> FreeRtosCharPtr;
 	pub fn freertos_rs_get_stack_high_water_mark(task: FreeRtosTaskHandle) -> FreeRtosBaseType;
@@ -114,7 +114,7 @@ pub mod freertos_rs_mocked {
 	pub fn freertos_rs_task_notify(_task: FreeRtosTaskHandle, _value: u32, _action: u8) -> FreeRtosBaseType { 0 }
 	pub fn freertos_rs_task_notify_isr(_task: FreeRtosTaskHandle, _value: u32, _action: u8, _xHigherPriorityTaskWoken: FreeRtosBaseTypeMutPtr) -> FreeRtosBaseType { 0 }
 
-	pub fn freertos_rs_spawn_task(_f: extern fn(FreeRtosMutVoidPtr) -> FreeRtosMutVoidPtr, _value: FreeRtosMutVoidPtr, _name: FreeRtosCharPtr, _name_len: u8, _stack_size: u16, _priority: FreeRtosUBaseType, _task_handle: FreeRtosMutTaskHandle) -> FreeRtosUBaseType { 0 }
+	pub fn freertos_rs_spawn_task(_f: extern fn(FreeRtosMutVoidPtr) -> FreeRtosMutVoidPtr, _value: FreeRtosMutVoidPtr, _name: FreeRtosCharPtr, _name_len: u8, _stack_size: u16, _priority: FreeRtosUBaseType, _core: *const u32, _task_handle: FreeRtosMutTaskHandle) -> FreeRtosUBaseType { 0 }
 	pub fn freertos_rs_delete_task(_task: FreeRtosTaskHandle) { }
 	pub fn freertos_rs_task_get_name(_task: FreeRtosTaskHandle) -> FreeRtosCharPtr { 0 as _ }
 	pub fn freertos_rs_get_stack_high_water_mark(_task: FreeRtosTaskHandle) -> FreeRtosBaseType { 0 }
