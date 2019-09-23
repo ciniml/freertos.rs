@@ -1,15 +1,13 @@
 /*
-FreeRTOS.rs shim library
-
-Include headers relevant for your platform.
-
-STM32 example:
-
-#include "stm32f4xx_hal.h"
-
+FreeRTOS.rs shim library for ESP32
 */
 
-#include "FreeRTOS.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/portmacro.h>
+#include <freertos/task.h>
+#include <freertos/queue.h>
+#include <freertos/semphr.h>
+#include <freertos/timers.h>
 
 uint8_t freertos_rs_sizeof(uint8_t _type) {
 	switch (_type) {
@@ -172,7 +170,7 @@ UBaseType_t freertos_rs_give_semaphore_isr(QueueHandle_t semaphore, BaseType_t* 
 }
 
 
-UBaseType_t freertos_rs_spawn_task(TaskFunction_t entry_point, void* pvParameters, const char * const name, uint8_t name_len, uint16_t stack_size, UBaseType_t priority, TaskHandle_t* task_handle) {
+UBaseType_t freertos_rs_spawn_task(TaskFunction_t entry_point, void* pvParameters, const char * const name, uint8_t name_len, uint16_t stack_size, UBaseType_t priority, const uint32_t* core, TaskHandle_t* task_handle) {
 	char c_name[configMAX_TASK_NAME_LEN] = {0};
 	for (int i = 0; i < name_len; i++) {
 		c_name[i] = name[i];
@@ -182,7 +180,14 @@ UBaseType_t freertos_rs_spawn_task(TaskFunction_t entry_point, void* pvParameter
 		}
 	}
 
-	BaseType_t ret = xTaskCreate(entry_point, c_name, stack_size, pvParameters, priority, task_handle);
+	BaseType_t ret;
+	if( core == NULL ) {
+		ret = xTaskCreate(entry_point, c_name, stack_size, pvParameters, priority, task_handle);
+	}
+	else {
+		ret = xTaskCreatePinnedToCore(entry_point, c_name, stack_size, pvParameters, priority, task_handle, *core);
+	}
+	
 
 	if (ret != pdPASS) {
 		return 1;
@@ -365,10 +370,10 @@ void* freertos_rs_timer_get_id(TimerHandle_t timer) {
 
 #endif
 
-void freertos_rs_enter_critical() {
-	taskENTER_CRITICAL();
+void freertos_rs_enter_critical(portMUX_TYPE* mux) {
+	taskENTER_CRITICAL(mux);
 }
 
-void freertos_rs_exit_critical() {
-	taskEXIT_CRITICAL();
+void freertos_rs_exit_critical(portMUX_TYPE* mux) {
+	taskEXIT_CRITICAL(mux);
 }
